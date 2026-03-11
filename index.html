@@ -3,111 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>人类丰容计划 - 审美版</title>
+    <title>人类丰容计划 - 终极逻辑版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;500;900&display=swap');
-        
-        :root { 
-            --primary: #6366f1; 
-            --accent: #f43f5e;
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        }
-
-        body { 
-            font-family: 'Noto Sans SC', sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
-            min-height: 100vh;
-            transition: background 0.8s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* 极致毛玻璃 */
-        .glass { 
-            background: rgba(255, 255, 255, 0.75); 
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 32px;
-            box-shadow: 0 20px 50px rgba(31, 38, 135, 0.07);
-        }
-
-        /* 灵动 Bingo 格子 */
-        .bingo-cell { 
-            aspect-ratio: 1/1; border-radius: 22px; cursor: pointer; 
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); 
-            display: flex; align-items: center; justify-content: center; text-align: center; 
-            padding: 10px; font-size: 0.85rem; font-weight: 500;
-            background: rgba(255, 255, 255, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-            color: #1e293b;
-        }
-        .bingo-cell:hover { transform: translateY(-3px) scale(1.02); background: white; }
-        .bingo-cell.active { 
-            background: var(--primary); 
-            color: white; 
-            font-weight: 900; 
-            border-color: transparent;
-            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
-        }
-
-        /* 顶部悬浮 */
+        :root { --primary: #6366f1; --accent: #f43f5e; --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        body { font-family: 'Noto Sans SC', sans-serif; background: var(--bg-gradient); background-attachment: fixed; min-height: 100vh; transition: background 0.8s ease; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 32px; box-shadow: 0 20px 50px rgba(31, 38, 135, 0.07); }
+        .bingo-cell { aspect-ratio: 1/1; border-radius: 22px; cursor: pointer; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 500; background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(255, 255, 255, 0.8); position: relative; }
+        .bingo-cell.active { background: var(--primary); color: white; font-weight: 900; border-color: transparent; box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4); }
         .header-float { position: sticky; top: 20px; z-index: 1000; width: 100%; max-width: 1000px; }
-
-        /* 任务标签 */
-        .tag-item { 
-            display: inline-flex; align-items: center; padding: 10px 18px; 
-            border-radius: 18px; background: white; margin: 6px; 
-            font-size: 13px; font-weight: 500; cursor: grab; 
-            border: 1px solid transparent; transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        }
-        .tag-item:hover { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
-
-        /* Sheet 选项卡 */
-        .sheet-tab { 
-            padding: 12px 24px; border-radius: 18px 18px 0 0; font-size: 14px; font-weight: 900;
-            cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #94a3b8; border-bottom: 4px solid transparent;
-        }
+        .tag-item { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: 18px; background: white; margin: 6px; font-size: 13px; font-weight: 500; cursor: grab; box-shadow: 0 4px 10px rgba(0,0,0,0.03); position: relative; }
+        .sheet-tab { padding: 12px 24px; border-radius: 18px 18px 0 0; font-size: 14px; font-weight: 900; cursor: pointer; transition: all 0.4s; color: #94a3b8; border-bottom: 4px solid transparent; }
         .sheet-tab.active { color: var(--primary); background: white; border-bottom-color: var(--primary); }
-
-        /* 删除动画 */
-        .tag-item.edit-mode { animation: jiggle 0.3s infinite; background: #fff5f5; border-color: #feb2b2; }
-        @keyframes jiggle { 
-            0% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } 
-        }
-        .del-marker { 
-            position: absolute; top: -10px; right: -10px; background: var(--accent);
-            color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 14px;
-            display: none; align-items: center; justify-content: center; border: 3px solid white;
-        }
+        .del-marker { position: absolute; top: -10px; right: -10px; background: var(--accent); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; display: none; align-items: center; justify-content: center; border: 3px solid white; z-index: 10; }
+        .tag-item.edit-mode { animation: jiggle 0.3s infinite; }
         .tag-item.edit-mode .del-marker { display: flex; }
-
-        /* 隐藏滚动条 */
+        @keyframes jiggle { 0%, 100% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } }
+        .sortable-ghost { opacity: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-10 text-slate-700" onclick="exitEditMode()">
 
     <div class="header-float mx-auto glass p-8 mb-12 flex flex-col md:flex-row justify-between items-center gap-8">
-        <div class="text-center md:text-left">
-            <h1 class="text-4xl font-black tracking-tight text-slate-800 flex items-center gap-3">
-                <span class="text-indigo-500">🌿</span> 人类丰容计划
-            </h1>
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-slate-800 flex items-center gap-3">🌿 人类丰容计划</h1>
             <p id="cur-date" class="text-xs text-slate-400 mt-2 font-bold tracking-widest uppercase"></p>
         </div>
         <div class="flex items-center gap-16">
-            <div class="text-center group">
-                <div class="text-[10px] text-slate-400 mb-1 font-black uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Progress</div>
+            <div class="text-center">
+                <div class="text-[10px] text-slate-400 mb-1 font-black uppercase tracking-widest">打卡进度</div>
                 <div id="prog-val" class="text-4xl font-black text-indigo-600">0%</div>
             </div>
-            <div class="text-center border-l border-slate-200 pl-16 group">
-                <div class="text-[10px] text-slate-400 mb-1 font-black uppercase tracking-widest group-hover:text-rose-500 transition-colors">Bingo</div>
+            <div class="text-center border-l border-slate-200 pl-16">
+                <div class="text-[10px] text-slate-400 mb-1 font-black uppercase tracking-widest">Bingo</div>
                 <div id="bingo-val" class="text-4xl font-black text-rose-500">0</div>
             </div>
         </div>
@@ -117,15 +49,16 @@
         <div class="lg:col-span-8 space-y-10">
             <div class="glass p-6 flex flex-wrap items-center justify-between gap-6 shadow-sm">
                 <div class="flex items-center gap-3 bg-white/50 p-2 rounded-2xl border border-white">
-                    <span class="text-[10px] font-black text-slate-400 pl-3">布局</span>
+                    <span class="text-[10px] font-black text-slate-400 pl-3 uppercase tracking-tighter">Layout</span>
                     <select id="sizeSel" onchange="handleSizeChange()" class="bg-transparent px-3 py-1 text-sm font-black outline-none cursor-pointer">
                         <option value="4x4">4 x 4</option>
                         <option value="5x5" selected>5 x 5</option>
                     </select>
                 </div>
                 <div class="flex gap-4">
-                    <button onclick="doRandomFill()" class="px-8 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-black shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95 transition-all">🎲 随机填充</button>
-                    <button onclick="doClearCheck()" class="px-8 py-3 bg-white/80 text-slate-600 rounded-2xl text-sm font-black border border-white hover:bg-white transition-all">清空打卡</button>
+                    <button onclick="doRandomFill()" class="px-7 py-3 bg-indigo-600 text-white rounded-2xl text-sm font-black shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95 transition-all">🎲 随机填充</button>
+                    <button onclick="recallAllTasks()" class="px-7 py-3 bg-white text-indigo-600 rounded-2xl text-sm font-black border border-indigo-100 hover:bg-indigo-50 active:scale-95 transition-all">↩️ 全撤回</button>
+                    <button onclick="doClearCheck()" class="px-7 py-3 bg-white text-slate-400 rounded-2xl text-sm font-black border border-slate-100 hover:text-slate-600 transition-all">🧹 清空打卡</button>
                 </div>
             </div>
 
@@ -134,167 +67,144 @@
             <div class="glass overflow-hidden shadow-2xl">
                 <div class="bg-slate-50/50 px-8 pt-6 flex items-center gap-2 border-b border-white overflow-x-auto no-scrollbar">
                     <div id="sheet-tabs" class="flex gap-2"></div>
-                    <button onclick="addSheet()" class="px-6 py-2 text-indigo-400 hover:text-indigo-600 text-2xl font-black transition-colors">+</button>
+                    <button onclick="addSheet()" class="px-6 py-2 text-indigo-400 text-2xl font-black hover:text-indigo-600 transition-colors">+</button>
                 </div>
-                
                 <div class="p-10">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-8">
                         <h2 class="text-2xl font-black text-slate-800" id="current-sheet-title">分类加载中...</h2>
-                        <span class="text-[10px] font-bold text-slate-400 px-3 py-1 bg-slate-100 rounded-full tracking-tighter uppercase">Long Press to Edit • Swap to Replace</span>
+                        <span class="text-[10px] font-bold text-slate-400 px-3 py-1 bg-white/50 rounded-full border border-white/50">禁止格间拖拽 · 覆盖自动归还</span>
                     </div>
-                    
                     <div class="flex gap-4 mb-10">
-                        <input id="tagIn" type="text" placeholder="捕捉瞬间灵感..." class="flex-1 px-7 py-5 rounded-[24px] border-none ring-1 ring-slate-100 focus:ring-4 focus:ring-indigo-100 transition-all outline-none text-sm bg-white/80">
-                        <button onclick="doAddTag()" class="bg-slate-900 text-white px-10 rounded-[24px] font-black text-sm hover:bg-black transition-all">添加</button>
+                        <input id="tagIn" type="text" placeholder="发现新的丰容方式..." class="flex-1 px-7 py-5 rounded-[24px] border-none ring-1 ring-slate-100 focus:ring-4 focus:ring-indigo-100 transition-all outline-none text-sm bg-white/80">
+                        <button onclick="doAddTag()" class="bg-slate-900 text-white px-10 rounded-[24px] font-black text-sm hover:bg-black transition-all">添加任务</button>
                     </div>
-                    
-                    <div id="tag-pool" class="flex flex-wrap min-h-[180px] p-4 bg-white/20 rounded-[32px] border-2 border-dashed border-indigo-100 align-content-start"></div>
+                    <div id="tag-pool" class="flex flex-wrap min-h-[180px] p-4 bg-white/20 rounded-[32px] border-2 border-dashed border-indigo-100 align-content-start transition-all"></div>
                 </div>
             </div>
         </div>
 
         <div class="lg:col-span-4 space-y-10">
-            <div class="glass p-10 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 text-8xl opacity-5 grayscale">📈</div>
-                <h2 class="font-black text-slate-800 mb-8 flex items-center gap-2 text-lg uppercase tracking-wider">统计 / Stats</h2>
+            <div class="glass p-10">
+                <h2 class="font-black text-slate-800 mb-8 uppercase tracking-wider text-sm">丰容统计 / Stats</h2>
                 <div class="grid grid-cols-2 gap-6 text-center">
-                    <div class="p-6 bg-white rounded-3xl border border-slate-50 shadow-sm transition-transform hover:scale-105">
-                        <div class="text-[10px] text-slate-300 font-black uppercase">坚持天数</div>
-                        <div id="stat-d" class="text-4xl font-black text-slate-700 mt-2">1</div>
-                    </div>
-                    <div class="p-6 bg-white rounded-3xl border border-slate-50 shadow-sm transition-transform hover:scale-105">
-                        <div class="text-[10px] text-slate-300 font-black uppercase">完美时刻</div>
-                        <div id="stat-p" class="text-4xl font-black text-slate-700 mt-2">0</div>
-                    </div>
+                    <div class="p-6 bg-white rounded-3xl border border-slate-50 shadow-sm"><div class="text-[10px] text-slate-300 font-black uppercase">坚持天数</div><div id="stat-d" class="text-4xl font-black text-slate-700">1</div></div>
+                    <div id="stat-box-p" class="p-6 bg-white rounded-3xl border border-slate-50 shadow-sm"><div class="text-[10px] text-slate-300 font-black uppercase">完美时刻</div><div id="stat-p" class="text-4xl font-black text-slate-700">0</div></div>
                 </div>
             </div>
-
             <div class="glass p-10">
-                <h2 class="font-black text-slate-800 mb-8 border-b border-slate-100 pb-4 text-lg uppercase tracking-wider">勋章 / Honors</h2>
+                <h2 class="font-black text-slate-800 mb-8 uppercase tracking-wider text-sm">勋章墙 / Honors</h2>
                 <div class="grid grid-cols-2 gap-5" id="ach-box">
-                    <div id="m-1" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border border-transparent transition-all shadow-sm">
-                        <span class="text-4xl mb-2">🌱</span><span class="text-[10px] font-black uppercase">新芽</span>
-                    </div>
-                    <div id="m-3" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border border-transparent transition-all shadow-sm">
-                        <span class="text-4xl mb-2">⚡</span><span class="text-[10px] font-black uppercase">爆发</span>
-                    </div>
-                    <div id="m-7" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border border-transparent transition-all shadow-sm">
-                        <span class="text-4xl mb-2">🔥</span><span class="text-[10px] font-black uppercase">炽热</span>
-                    </div>
-                    <div id="m-win" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border border-transparent transition-all shadow-sm">
-                        <span class="text-4xl mb-2">👑</span><span class="text-[10px] font-black uppercase">荣耀</span>
-                    </div>
+                    <div id="m-1" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border grayscale opacity-20 transition-all"><span class="text-4xl mb-2">🌱</span><span class="text-[10px] font-black uppercase">新芽</span></div>
+                    <div id="m-3" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border grayscale opacity-20 transition-all"><span class="text-4xl mb-2">⚡</span><span class="text-[10px] font-black uppercase">爆发</span></div>
+                    <div id="m-7" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border grayscale opacity-20 transition-all"><span class="text-4xl mb-2">🔥</span><span class="text-[10px] font-black uppercase">炽热</span></div>
+                    <div id="m-win" class="achieve-card flex flex-col items-center p-6 rounded-[32px] bg-white/50 border grayscale opacity-20 transition-all"><span class="text-4xl mb-2">👑</span><span class="text-[10px] font-black uppercase">荣耀</span></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="win-ui" onclick="this.style.display='none'" class="fixed inset-0 bg-indigo-600/90 backdrop-blur-xl z-[5000] hidden flex-col items-center justify-center cursor-pointer">
-        <div class="text-[200px] mb-8 animate-bounce">🏆</div>
-        <h2 class="text-7xl font-black text-white tracking-tighter uppercase italic">Fantastic!</h2>
-        <p class="text-indigo-200 mt-8 font-black tracking-[0.6em] uppercase text-xl">人生丰容大师</p>
-    </div>
-
     <script>
-        // 配置与主题
         const THEMES = [
-            { primary: '#6366f1', bg: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }, // 蓝
-            { primary: '#10b981', bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }, // 绿
-            { primary: '#f43f5e', bg: 'linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%)' }, // 红
-            { primary: '#f59e0b', bg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }, // 橙
-            { primary: '#8b5cf6', bg: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' }  // 紫
+            { primary: '#6366f1', bg: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' },
+            { primary: '#10b981', bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' },
+            { primary: '#f59e0b', bg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' },
+            { primary: '#8b5cf6', bg: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)' }
         ];
 
         let db = {
-            grid: JSON.parse(localStorage.getItem('fr_grid_v2')) || Array(25).fill(""),
-            active: JSON.parse(localStorage.getItem('fr_active_v2')) || [],
-            sheets: JSON.parse(localStorage.getItem('fr_sheets_v2')) || [
-                {name: '每日必备', tags: ["晒太阳", "喝水1.5L", "阅读10页", "对镜微笑", "早睡30min"]},
-                {name: '感官觉察', tags: ["听完整专辑", "涂抹香水", "观察云朵", "赤脚走路", "深呼吸10次"]},
-                {name: '社交/办公', tags: ["整理桌面", "发呆10min", "拉伸运动", "问候老友", "写感恩日记"]}
+            grid: JSON.parse(localStorage.getItem('fr_final_g')) || Array(25).fill(""),
+            active: JSON.parse(localStorage.getItem('fr_final_a')) || [],
+            sheets: JSON.parse(localStorage.getItem('fr_final_s')) || [
+                {name: '日常丰容', tags: ["晒太阳", "喝水1.5L", "对镜微笑", "早睡30min", "拉伸5min"]},
+                {name: '感官洗礼', tags: ["听黑胶唱片", "涂抹檀香", "赤脚踩地", "观察绿植", "深呼吸10次"]}
             ],
             currentSheetIndex: 0,
-            stats: JSON.parse(localStorage.getItem('fr_stats_v2')) || { days: 1, perfect: 0, lastDate: new Date().toLocaleDateString(), bingos: 0 }
+            stats: JSON.parse(localStorage.getItem('fr_final_st')) || { days: 1, perfect: 0, lastDate: new Date().toLocaleDateString(), bingos: 0 }
         };
 
         const save = () => {
-            localStorage.setItem('fr_grid_v2', JSON.stringify(db.grid));
-            localStorage.setItem('fr_active_v2', JSON.stringify(db.active));
-            localStorage.setItem('fr_sheets_v2', JSON.stringify(db.sheets));
-            localStorage.setItem('fr_stats_v2', JSON.stringify(db.stats));
+            localStorage.setItem('fr_final_g', JSON.stringify(db.grid));
+            localStorage.setItem('fr_final_a', JSON.stringify(db.active));
+            localStorage.setItem('fr_final_s', JSON.stringify(db.sheets));
+            localStorage.setItem('fr_final_st', JSON.stringify(db.stats));
         };
 
-        const updateTheme = () => {
+        function init() {
             const theme = THEMES[db.currentSheetIndex % THEMES.length];
             document.documentElement.style.setProperty('--primary', theme.primary);
             document.body.style.background = theme.bg;
-        };
+            renderGrid(); renderSheets(); renderPool(); syncDashboard();
+            if(db.stats.lastDate !== new Date().toLocaleDateString()) { db.stats.days++; db.stats.lastDate = new Date().toLocaleDateString(); save(); }
+        }
 
-        const init = () => {
-            updateTheme();
-            renderGrid();
-            renderSheets();
-            renderPool();
-            syncDashboard();
-            if(db.stats.lastDate !== new Date().toLocaleDateString()) {
-                db.stats.days++; db.stats.lastDate = new Date().toLocaleDateString(); save();
-            }
-        };
-
-        // 渲染逻辑
         function renderGrid() {
             const el = document.getElementById('bingo-grid');
             const size = parseInt(document.getElementById('sizeSel').value[0]);
-            el.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-            el.innerHTML = '';
+            el.style.gridTemplateColumns = `repeat(${size}, 1fr)`; el.innerHTML = '';
+
             db.grid.slice(0, size*size).forEach((txt, i) => {
                 const cell = document.createElement('div');
                 cell.className = `bingo-cell ${db.active.includes(i) ? 'active' : ''}`;
                 cell.innerHTML = txt ? `<span>${txt}</span>` : `<span class="opacity-10 text-[8px] font-black uppercase">Empty</span>`;
-                cell.onclick = (e) => { e.stopPropagation(); if(txt) toggleCell(i); };
+                cell.onclick = () => { if(txt) toggleCell(i); };
                 el.appendChild(cell);
             });
-            new Sortable(el, { group: 'fr', animation: 400, swapThreshold: 0.6, onEnd: syncGlobalData });
-        }
 
-        function renderSheets() {
-            const tabs = document.getElementById('sheet-tabs'); tabs.innerHTML = '';
-            db.sheets.forEach((sheet, i) => {
-                const tab = document.createElement('div');
-                tab.className = `sheet-tab ${db.currentSheetIndex === i ? 'active' : ''}`;
-                tab.innerText = sheet.name;
-                tab.onclick = () => { db.currentSheetIndex = i; init(); };
-                tab.ondblclick = () => renameSheet(i);
-                let t; tab.onmousedown = () => t = setTimeout(() => deleteSheet(i), 1000); tab.onmouseup = () => clearTimeout(t);
-                tabs.appendChild(tab);
+            new Sortable(el, {
+                group: { name: 'fr_group', put: ['pool_group'] },
+                sort: false, // 核心逻辑：禁止格间拖拽互换
+                animation: 300,
+                onAdd: (evt) => handleIncoming(evt),
+                onEnd: syncGlobalData
             });
-            document.getElementById('current-sheet-title').innerText = db.sheets[db.currentSheetIndex].name;
         }
 
         function renderPool() {
             const el = document.getElementById('tag-pool'); el.innerHTML = '';
             db.sheets[db.currentSheetIndex].tags.forEach((txt, i) => {
-                const tag = document.createElement('div');
-                tag.className = 'tag-item';
+                const tag = document.createElement('div'); tag.className = 'tag-item';
                 tag.innerHTML = `${txt}<div class="del-marker" onclick="doDelTag(${i}, event)">×</div>`;
-                let t;
-                tag.onmousedown = () => t = setTimeout(() => tag.classList.add('edit-mode'), 600);
+                let t; tag.onmousedown = () => t = setTimeout(() => tag.classList.add('edit-mode'), 600);
                 tag.onmouseup = () => clearTimeout(t);
                 el.appendChild(tag);
             });
-            new Sortable(el, { group: 'fr', animation: 400, onEnd: syncGlobalData });
+            new Sortable(el, {
+                group: { name: 'pool_group', pull: 'clone', put: true },
+                animation: 300,
+                onEnd: syncGlobalData
+            });
+        }
+
+        function handleIncoming(evt) {
+            const targetIdx = Array.from(evt.to.children).indexOf(evt.item);
+            const oldTask = db.grid[targetIdx];
+            if (oldTask && oldTask !== "") {
+                db.sheets[db.currentSheetIndex].tags.push(oldTask); // 自动归还
+            }
+            syncGlobalData();
         }
 
         function syncGlobalData() {
-            db.grid = Array.from(document.querySelectorAll('#bingo-grid .bingo-cell')).map(el => {
-                const clean = el.innerText.replace('×', '').replace('EMPTY', '').trim();
-                return clean === "EMPTY" ? "" : clean;
+            const gridCells = document.querySelectorAll('#bingo-grid .bingo-cell');
+            db.grid = Array.from(gridCells).map(el => {
+                const t = el.innerText.replace('×', '').replace('EMPTY', '').trim();
+                return t === "EMPTY" ? "" : t;
             });
             db.sheets[db.currentSheetIndex].tags = Array.from(document.querySelectorAll('#tag-pool .tag-item')).map(el => el.innerText.replace('×', '').trim());
             save(); init();
         }
 
-        // 业务逻辑
+        function recallAllTasks() {
+            if(db.grid.filter(t=>t).length === 0) return;
+            if(confirm("确定撤回棋盘上所有任务到当前任务池吗？")) {
+                db.grid.forEach(task => { if(task) db.sheets[db.currentSheetIndex].tags.push(task); });
+                db.grid = Array(25).fill("");
+                db.active = [];
+                db.stats.bingos = 0;
+                save(); init();
+            }
+        }
+
         function toggleCell(idx) {
             const p = db.active.indexOf(idx);
             if(p > -1) db.active.splice(p, 1);
@@ -313,10 +223,10 @@
             let d1=[], d2=[]; for(let i=0; i<size; i++) { d1.push(i*size+i); d2.push(i*size+(size-1-i)); }
             if(d1.every(idx => act.includes(idx) && g[idx])) count++;
             if(d2.every(idx => act.includes(idx) && g[idx])) count++;
-            if(count > db.stats.bingos) confetti({ particleCount: 200, spread: 90, origin: { y: 0.8 }, colors: ['#6366f1', '#f43f5e', '#10b981'] });
+            if(count > db.stats.bingos) confetti({ particleCount: 150, spread: 70, origin: { y: 0.8 } });
             db.stats.bingos = count;
             const filled = g.filter(t=>t).length;
-            if(filled > 0 && act.length === filled) { document.getElementById('win-ui').style.display = 'flex'; db.stats.perfect++; }
+            if(filled > 0 && act.length === filled) db.stats.perfect++;
             save(); syncDashboard();
         }
 
@@ -328,18 +238,26 @@
             document.getElementById('stat-d').innerText = db.stats.days;
             document.getElementById('stat-p').innerText = db.stats.perfect;
             document.getElementById('cur-date').innerText = new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            if(db.stats.bingos >= 1) document.getElementById('m-1').classList.add('lit');
-            if(db.stats.bingos >= 3) document.getElementById('m-3').classList.add('lit');
-            if(db.stats.days >= 7) document.getElementById('m-7').classList.add('lit');
-            if(filled > 0 && db.active.length === filled) document.getElementById('m-win').classList.add('lit');
+            
+            if(db.stats.bingos >= 1) document.getElementById('m-1').classList.remove('grayscale', 'opacity-20');
+            if(db.stats.bingos >= 3) document.getElementById('m-3').classList.remove('grayscale', 'opacity-20');
+            if(db.stats.days >= 7) document.getElementById('m-7').classList.remove('grayscale', 'opacity-20');
         }
 
-        // 分类管理逻辑
-        function addSheet() { const name = prompt("分类名称:", "新灵感池"); if(name) { db.sheets.push({name: name, tags: []}); db.currentSheetIndex = db.sheets.length - 1; save(); init(); } }
-        function renameSheet(i) { const name = prompt("重命名:", db.sheets[i].name); if(name) { db.sheets[i].name = name; save(); init(); } }
-        function deleteSheet(i) { if(db.sheets.length > 1 && confirm("删除分类？")) { db.sheets.splice(i, 1); db.currentSheetIndex = 0; save(); init(); } }
+        function renderSheets() {
+            const tabs = document.getElementById('sheet-tabs'); tabs.innerHTML = '';
+            db.sheets.forEach((sheet, i) => {
+                const tab = document.createElement('div'); tab.className = `sheet-tab ${db.currentSheetIndex === i ? 'active' : ''}`;
+                tab.innerText = sheet.name; tab.onclick = () => { db.currentSheetIndex = i; init(); };
+                tab.ondblclick = () => { const n = prompt("重命名:", sheet.name); if(n) { sheet.name = n; save(); init(); } };
+                tabs.appendChild(tab);
+            });
+            document.getElementById('current-sheet-title').innerText = db.sheets[db.currentSheetIndex].name;
+        }
+
+        function addSheet() { const n = prompt("分类名称:", "新丰容分类"); if(n) { db.sheets.push({name: n, tags: []}); db.currentSheetIndex = db.sheets.length-1; save(); init(); } }
         function doAddTag() { const v = document.getElementById('tagIn').value; if(v) { db.sheets[db.currentSheetIndex].tags.unshift(v); document.getElementById('tagIn').value = ''; save(); init(); } }
-        function doDelTag(i, e) { e.stopPropagation(); if(confirm("删除该任务？")) { db.sheets[db.currentSheetIndex].tags.splice(i,1); save(); init(); } }
+        function doDelTag(i, e) { e.stopPropagation(); if(confirm("删除此任务？")) { db.sheets[db.currentSheetIndex].tags.splice(i,1); save(); init(); } }
         function doRandomFill() { let s = [...db.sheets[db.currentSheetIndex].tags].sort(() => Math.random() - 0.5); const size = parseInt(document.getElementById('sizeSel').value[0]); db.grid = s.slice(0, size*size); while(db.grid.length < size*size) db.grid.push(""); db.active = []; db.stats.bingos = 0; save(); init(); }
         function doClearCheck() { db.active = []; db.stats.bingos = 0; save(); init(); }
         function handleSizeChange() { db.active = []; db.stats.bingos = 0; save(); init(); }

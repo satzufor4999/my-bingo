@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的人类丰荣 Bingo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bingo-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; padding: 4px; border: 1px solid #e2e8f0; }
+        .bingo-cell.active { background-color: #86efac; color: #166534; font-weight: bold; text-decoration: line-through; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center py-8 px-4">
+    <div class="max-w-md w-full">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">🌿 人类丰荣计划</h1>
+            <p class="text-slate-500 mt-2">像照顾珍稀动物一样照顾自己</p>
+        </header>
+
+        <div id="bingo-grid" class="grid grid-cols-5 gap-2 bg-white p-4 rounded-2xl shadow-xl">
+            </div>
+
+        <button onclick="resetBingo()" class="w-full mt-8 py-3 bg-slate-800 text-white rounded-xl font-medium hover:bg-slate-700 transition">
+            刷新今日任务
+        </button>
+    </div>
+
+    <script>
+        const tasks = ["晒太阳", "喝足1.5L水", "放下手机吃顿饭", "拉伸5分钟", "摸摸植物", "深呼吸3次", "整理床铺", "读5页书", "吃个水果", "写下3件好事", "修剪指甲", "换套舒服衣服", "听一张完整专辑", "给窗户通风", "步行3000步", "手写一行字", "清理手机截图", "洗个热水澡", "远眺绿植", "喝杯热茶", "闭目养神", "涂身体乳", "和朋友聊天", "整理桌面", "早睡30分钟"];
+
+        function initBingo() {
+            const grid = document.getElementById('bingo-grid');
+            // 获取保存的状态，如果没有则为空对象
+            const savedState = JSON.parse(localStorage.getItem('bingoProgress') || '{}');
+            
+            grid.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell bg-slate-50 rounded-lg hover:shadow-inner';
+                cell.innerText = task;
+                
+                // 恢复之前的状态
+                if (savedState[index]) {
+                    cell.classList.add('active');
+                }
+
+                cell.onclick = () => {
+                    cell.classList.toggle('active');
+                    saveProgress();
+                };
+                grid.appendChild(cell);
+            });
+        }
+
+        function saveProgress() {
+            const cells = document.querySelectorAll('.bingo-cell');
+            const state = {};
+            cells.forEach((cell, index) => {
+                state[index] = cell.classList.contains('active');
+            });
+            localStorage.setItem('bingoProgress', JSON.stringify(state));
+        }
+
+        function resetBingo() {
+            if(confirm("确定要重置今日进度吗？")) {
+                localStorage.removeItem('bingoProgress');
+                initBingo();
+            }
+        }
+
+        initBingo();
+    </script>
+</body>
+</html>

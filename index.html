@@ -3,72 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的人类丰荣 Bingo</title>
+    <title>高级版人类丰荣</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        .bingo-cell { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; padding: 4px; border: 1px solid #e2e8f0; }
-        .bingo-cell.active { background-color: #86efac; color: #166534; font-weight: bold; text-decoration: line-through; }
+        .bingo-cell { aspect-ratio: 1/1; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px; position: relative; }
+        .bingo-cell.active { background-opacity: 0.8; text-decoration: line-through; filter: brightness(0.9); }
+        .edit-mode .bingo-cell { cursor: grab; text-decoration: none !important; }
+        .delete-btn { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: none; align-items: center; justify-content: center; }
+        .edit-mode .delete-btn { display: flex; }
+        /* 马卡龙色系 */
+        .theme-pink { background-color: #ffeadb; color: #8d5d46; } /* 杏粉 */
+        .theme-blue { background-color: #d4f0f0; color: #4a7c7c; } /* 薄荷蓝 */
+        .theme-purple { background-color: #e2d5f8; color: #6a5a8a; } /* 薰衣草紫 */
+        .theme-green { background-color: #e1f0c4; color: #5a6a3a; } /* 抹茶绿 */
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col items-center py-8 px-4">
+<body class="bg-white min-h-screen flex flex-col items-center py-6 px-4">
     <div class="max-w-md w-full">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800">🌿 人类丰荣计划</h1>
-            <p class="text-slate-500 mt-2">像照顾珍稀动物一样照顾自己</p>
-        </header>
-
-        <div id="bingo-grid" class="grid grid-cols-5 gap-2 bg-white p-4 rounded-2xl shadow-xl">
+        <div class="bg-slate-100 p-4 rounded-2xl mb-6 space-y-4 shadow-sm">
+            <div class="flex justify-between items-center">
+                <select id="gridSize" onchange="renderBoard()" class="p-2 rounded bg-white border">
+                    <option value="4x4">4 x 4 模式</option>
+                    <option value="4x5">4 x 5 模式</option>
+                    <option value="5x5" selected>5 x 5 模式</option>
+                </select>
+                <select id="themeSelect" onchange="changeTheme()" class="p-2 rounded bg-white border">
+                    <option value="theme-pink">樱花粉</option>
+                    <option value="theme-blue">薄荷蓝</option>
+                    <option value="theme-purple">风铃紫</option>
+                    <option value="theme-green">青草绿</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2">
+                <input id="newItem" type="text" placeholder="添加新任务..." class="flex-1 p-2 rounded border">
+                <button onclick="addItem()" class="bg-blue-500 text-white px-4 py-2 rounded">添加</button>
             </div>
 
-        <button onclick="resetBingo()" class="w-full mt-8 py-3 bg-slate-800 text-white rounded-xl font-medium hover:bg-slate-700 transition">
-            刷新今日任务
-        </button>
+            <div class="flex justify-between">
+                <button onclick="toggleEdit()" id="editBtn" class="text-sm font-bold text-blue-600">进入编辑/拖拽模式</button>
+                <button onclick="resetProgress()" class="text-sm text-gray-500">重置勾选</button>
+            </div>
+        </div>
+
+        <div id="bingo-grid" class="grid gap-2 p-2 rounded-xl shadow-inner bg-gray-50"></div>
     </div>
 
     <script>
-        const tasks = ["晒太阳", "喝足1.5L水", "放下手机吃顿饭", "拉伸5分钟", "摸摸植物", "深呼吸3次", "整理床铺", "读5页书", "吃个水果", "写下3件好事", "修剪指甲", "换套舒服衣服", "听一张完整专辑", "给窗户通风", "步行3000步", "手写一行字", "清理手机截图", "洗个热水澡", "远眺绿植", "喝杯热茶", "闭目养神", "涂身体乳", "和朋友聊天", "整理桌面", "早睡30分钟"];
+        let tasks = JSON.parse(localStorage.getItem('myTasks')) || ["晒太阳", "喝足水", "拉伸", "吃水果", "撸猫", "冥想", "阅读", "整理", "深呼吸", "听音乐", "不刷手机吃饭", "早睡", "运动", "写日记", "发消息", "看日落", "洗热水澡", "剪指甲", "换床单", "喝杯茶", "浇花", "发呆", "涂香水", "唱歌", "自由创作"];
+        let activeIndices = JSON.parse(localStorage.getItem('activeIndex')) || [];
+        let isEditMode = false;
+        let sortable;
 
-        function initBingo() {
+        function renderBoard() {
             const grid = document.getElementById('bingo-grid');
-            // 获取保存的状态，如果没有则为空对象
-            const savedState = JSON.parse(localStorage.getItem('bingoProgress') || '{}');
-            
-            grid.innerHTML = '';
-            tasks.forEach((task, index) => {
-                const cell = document.createElement('div');
-                cell.className = 'bingo-cell bg-slate-50 rounded-lg hover:shadow-inner';
-                cell.innerText = task;
-                
-                // 恢复之前的状态
-                if (savedState[index]) {
-                    cell.classList.add('active');
-                }
+            const size = document.getElementById('gridSize').value;
+            const [cols, rows] = size.split('x').map(Number);
+            const theme = document.getElementById('themeSelect').value;
+            const total = cols * rows;
 
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.innerHTML = '';
+
+            tasks.slice(0, total).forEach((task, index) => {
+                const cell = document.createElement('div');
+                cell.className = `bingo-cell rounded-lg shadow-sm ${theme} ${activeIndices.includes(index) ? 'active shadow-none opacity-50' : ''}`;
+                cell.innerHTML = `${task} <div class="delete-btn" onclick="deleteItem(${index}, event)">×</div>`;
+                
                 cell.onclick = () => {
-                    cell.classList.toggle('active');
-                    saveProgress();
+                    if (isEditMode) return;
+                    if (activeIndices.includes(index)) {
+                        activeIndices = activeIndices.filter(i => i !== index);
+                    } else {
+                        activeIndices.push(index);
+                    }
+                    save();
+                    renderBoard();
                 };
                 grid.appendChild(cell);
             });
-        }
 
-        function saveProgress() {
-            const cells = document.querySelectorAll('.bingo-cell');
-            const state = {};
-            cells.forEach((cell, index) => {
-                state[index] = cell.classList.contains('active');
+            // 初始化拖拽
+            if (sortable) sortable.destroy();
+            sortable = new Sortable(grid, {
+                animation: 150,
+                disabled: !isEditMode,
+                onEnd: (evt) => {
+                    const item = tasks.splice(evt.oldIndex, 1)[0];
+                    tasks.splice(evt.newIndex, 0, item);
+                    save();
+                }
             });
-            localStorage.setItem('bingoProgress', JSON.stringify(state));
         }
 
-        function resetBingo() {
-            if(confirm("确定要重置今日进度吗？")) {
-                localStorage.removeItem('bingoProgress');
-                initBingo();
+        function toggleEdit() {
+            isEditMode = !isEditMode;
+            document.body.classList.toggle('edit-mode', isEditMode);
+            document.getElementById('editBtn').innerText = isEditMode ? "💾 保存排序" : "✏️ 进入编辑/拖拽模式";
+            renderBoard();
+        }
+
+        function addItem() {
+            const input = document.getElementById('newItem');
+            if (input.value) {
+                tasks.unshift(input.value);
+                input.value = '';
+                save();
+                renderBoard();
             }
         }
 
-        initBingo();
+        function deleteItem(index, event) {
+            event.stopPropagation();
+            tasks.splice(index, 1);
+            save();
+            renderBoard();
+        }
+
+        function changeTheme() { save(); renderBoard(); }
+        function save() {
+            localStorage.setItem('myTasks', JSON.stringify(tasks));
+            localStorage.setItem('activeIndex', JSON.stringify(activeIndices));
+            localStorage.setItem('myTheme', document.getElementById('themeSelect').value);
+            localStorage.setItem('mySize', document.getElementById('gridSize').value);
+        }
+
+        function resetProgress() {
+            activeIndices = [];
+            save();
+            renderBoard();
+        }
+
+        // 初始化加载保存的配置
+        document.getElementById('themeSelect').value = localStorage.getItem('myTheme') || 'theme-pink';
+        document.getElementById('gridSize').value = localStorage.getItem('mySize') || '5x5';
+        renderBoard();
     </script>
 </body>
 </html>

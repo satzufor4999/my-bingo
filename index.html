@@ -3,404 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>人类丰荣计划</title>
+    <title>人类丰荣计划 Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.8); }
-        body { 
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); 
-            min-height: 100vh; 
-            transition: background 0.5s;
-        }
+        :root { --glass: rgba(255, 255, 255, 0.85); }
+        body { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); min-height: 100vh; overflow-x: hidden; }
+        .glass { background: var(--glass); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
         
-        .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.5); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        
-        /* Bingo 格子动画 */
+        /* Bingo 格子 */
         .bingo-cell { 
             aspect-ratio: 1/1; border-radius: 18px; cursor: pointer; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
             display: flex; align-items: center; justify-content: center; text-align: center; 
-            padding: 10px; font-size: 0.9rem; border: 2px solid transparent;
-            background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            padding: 12px; font-size: 0.85rem; background: white; 
+            border: 2px solid transparent; position: relative;
         }
-        .bingo-cell.active { 
-            transform: scale(0.92);
-            box-shadow: inset 0 4px 12px rgba(0,0,0,0.08);
-            color: rgba(0,0,0,0.3) !important;
-        }
+        .bingo-cell.active { background: #e0f2fe; color: #0369a1; font-weight: 600; box-shadow: inset 0 4px 10px rgba(0,0,0,0.05); }
+        .bingo-cell.active::after { content: "✓"; position: absolute; bottom: 5px; right: 8px; font-size: 12px; opacity: 0.5; }
 
-        /* 连线高亮动画 */
-        @keyframes line-glow {
-            0% { box-shadow: 0 0 0px #fff; }
-            50% { box-shadow: 0 0 20px #ffd700; border-color: #ffd700; }
-            100% { box-shadow: 0 0 0px #fff; }
-        }
-        .line-complete { animation: line-glow 1.5s ease-in-out; }
+        /* 悬浮栏尺寸增大 */
+        .header-float { position: sticky; top: 15px; z-index: 1000; width: 100%; max-width: 950px; }
+        
+        /* 拖拽样式 */
+        .sortable-ghost { opacity: 0.3; transform: scale(0.9); background: #3b82f6 !important; }
+        .sortable-drag { cursor: grabbing; box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
 
-        /* 悬浮栏增强 */
-        .header-float { position: sticky; top: 15px; z-index: 1000; width: 100%; max-width: 900px; }
-
-        /* 任务池 Tag */
         .tag-item { 
-            display: inline-flex; align-items: center; padding: 8px 16px; 
-            border-radius: 12px; background: white; margin: 4px; 
-            font-size: 14px; cursor: grab; border: 1px solid #eee;
-            transition: transform 0.2s;
+            display: inline-flex; align-items: center; padding: 10px 18px; 
+            border-radius: 14px; background: white; margin: 5px; 
+            font-size: 14px; cursor: grab; border: 1px solid #f0f0f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-        .tag-item:active { cursor: grabbing; transform: scale(1.1); }
 
-        /* 成就图标点亮 */
-        .achieve-card { grayscale: 100%; opacity: 0.4; transition: 0.5s; }
-        .achieve-card.unlocked { grayscale: 0%; opacity: 1; transform: translateY(-5px); }
-
-        /* 主题方案 */
-        .theme-pink { --main: #ffafbd; --sub: #ffc3a0; }
-        .theme-blue { --main: #2193b0; --sub: #6dd5ed; }
-        .theme-green { --main: #11998e; --sub: #38ef7d; }
-
-        .theme-pink .bingo-cell.active { background: #ffe4e8; }
-        .theme-blue .bingo-cell.active { background: #e0f2fe; }
-        .theme-green .bingo-cell.active { background: #f0fdf4; }
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-10 font-sans text-slate-700">
+<body class="p-4 md:p-8 text-slate-700">
 
-    <div class="header-float mx-auto glass p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-            <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-500">🌿 人类丰荣计划</h1>
-            <p id="top-date" class="text-xs text-slate-400 mt-1 uppercase tracking-widest"></p>
+    <div class="header-float mx-auto glass p-8 mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="text-center md:text-left">
+            <h1 class="text-3xl font-black tracking-tight text-slate-800">🌿 人类丰荣计划</h1>
+            <p id="top-date" class="text-xs text-slate-400 mt-2 font-mono uppercase"></p>
         </div>
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-12">
             <div class="text-center">
-                <div class="text-xs text-slate-400">今日进度</div>
-                <div id="top-progress" class="text-xl font-bold text-blue-500">0%</div>
+                <div class="text-xs text-slate-400 mb-1">今日进度</div>
+                <div id="top-progress" class="text-2xl font-black text-blue-600">0%</div>
             </div>
-            <div class="text-center border-l border-slate-200 pl-8">
-                <div class="text-xs text-slate-400">BINGO 条数</div>
-                <div id="top-bingo" class="text-xl font-bold text-orange-500">0</div>
+            <div class="text-center border-l border-slate-200 pl-12">
+                <div class="text-xs text-slate-400 mb-1">BINGO 条数</div>
+                <div id="top-bingo" class="text-2xl font-black text-orange-500">0</div>
             </div>
         </div>
     </div>
 
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
         <div class="lg:col-span-8 space-y-8">
-            
-            <div class="glass p-4 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-sm font-medium">规格</span>
-                    <select id="gridSize" onchange="resetGrid()" class="bg-white/50 px-3 py-1 rounded-full text-sm outline-none border">
+            <div class="glass p-5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-bold">棋盘规格</span>
+                    <select id="gridSize" onchange="changeGridSize()" class="bg-white px-4 py-2 rounded-xl text-sm border-none ring-1 ring-slate-200">
                         <option value="4x4">4 x 4</option>
-                        <option value="4x5">4 x 5</option>
                         <option value="5x5" selected>5 x 5</option>
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="randomizeGrid()" class="px-4 py-2 bg-indigo-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-200">🎲 随机填充</button>
-                    <button onclick="clearDailyProgress()" class="px-4 py-2 bg-white text-slate-600 rounded-xl text-sm font-bold border">🧹 清空打卡</button>
-                    <button onclick="clearGridTasks()" class="px-4 py-2 bg-slate-100 text-slate-400 rounded-xl text-sm font-bold">🗑️ 一键清除表格</button>
+                    <button onclick="randomFill()" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-100 active:scale-95 transition">🎲 随机挑战</button>
+                    <button onclick="clearProgress()" class="px-5 py-2.5 bg-white text-slate-600 rounded-xl text-sm font-bold border active:bg-slate-50">🧹 清空打卡</button>
+                    <button onclick="resetGridTasks()" class="px-5 py-2.5 bg-slate-100 text-slate-500 rounded-xl text-sm font-bold hover:bg-red-50 hover:text-red-500 transition">🗑️ 重置棋盘</button>
                 </div>
             </div>
 
-            <div id="bingo-container" class="transition-all duration-500 origin-top">
-                <div id="bingo-grid" class="grid gap-4 p-4 rounded-3xl bg-slate-200/30"></div>
-            </div>
+            <div id="bingo-grid" class="grid gap-4 p-5 rounded-[32px] bg-slate-200/20 shadow-inner min-h-[400px]"></div>
 
             <div class="glass p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-slate-800">📥 任务池</h2>
-                    <span class="text-xs text-slate-400">长按可删除标签 | 拖拽至表格填充</span>
+                    <h2 class="text-xl font-bold">📥 任务存储池</h2>
+                    <span class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-400">长按标签删除</span>
                 </div>
-                <div class="flex gap-3 mb-6">
-                    <input id="tagInput" type="text" placeholder="发现新的丰荣方式..." class="flex-1 px-5 py-3 rounded-2xl border-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-400 transition-all outline-none bg-white/50 text-sm">
-                    <button onclick="addNewTag()" class="bg-slate-800 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 active:scale-95 transition-transform">添加</button>
+                <div class="flex gap-3 mb-8">
+                    <input id="tagInput" type="text" placeholder="输入新的丰荣灵感..." class="flex-1 px-5 py-4 rounded-2xl border-none ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-400 transition-all outline-none text-sm bg-white/50">
+                    <button onclick="addTag()" class="bg-slate-800 text-white px-8 rounded-2xl font-bold">添加</button>
                 </div>
-                <div id="tag-pool" class="flex flex-wrap min-h-[120px] p-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200"></div>
+                <div id="tag-pool" class="flex flex-wrap min-h-[150px] p-6 bg-white/30 rounded-3xl border-2 border-dashed border-slate-200 items-start align-content-start"></div>
             </div>
         </div>
 
         <div class="lg:col-span-4 space-y-8">
             <div class="glass p-8">
-                <h2 class="font-bold text-slate-800 mb-6 border-b pb-4">数据统计</h2>
-                <div class="space-y-6">
-                    <div class="flex justify-between items-end">
-                        <span class="text-slate-400 text-sm">坚持天数</span>
-                        <span class="text-2xl font-black" id="stat-days">1</span>
+                <h2 class="font-bold text-slate-800 mb-6 flex items-center gap-2">📊 数据表现</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-white rounded-2xl border">
+                        <div class="text-[10px] text-slate-400 uppercase">坚持天数</div>
+                        <div id="stat-days" class="text-2xl font-black mt-1">1</div>
                     </div>
-                    <div class="flex justify-between items-end">
-                        <span class="text-slate-400 text-sm">完美天数</span>
-                        <span class="text-2xl font-black" id="stat-perfect">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass p-8">
-                <h2 class="font-bold text-slate-800 mb-6 border-b pb-4">成就勋章</h2>
-                <div class="grid grid-cols-2 gap-4" id="achievements">
-                    <div class="achieve-card flex flex-col items-center p-3 rounded-2xl bg-slate-50 border" id="ach-1">
-                        <span class="text-3xl mb-2">🌱</span>
-                        <span class="text-[10px] font-bold">初步丰荣</span>
-                        <span class="text-[8px] text-slate-400">完成1次Bingo</span>
-                    </div>
-                    <div class="achieve-card flex flex-col items-center p-3 rounded-2xl bg-slate-50 border" id="ach-7">
-                        <span class="text-3xl mb-2">🔥</span>
-                        <span class="text-[10px] font-bold">持续进化</span>
-                        <span class="text-[8px] text-slate-400">连续坚持7天</span>
-                    </div>
-                    <div class="achieve-card flex flex-col items-center p-3 rounded-2xl bg-slate-50 border" id="ach-all">
-                        <span class="text-3xl mb-2">👑</span>
-                        <span class="text-[10px] font-bold">人类巅峰</span>
-                        <span class="text-[8px] text-slate-400">点亮全表格</span>
-                    </div>
-                    <div class="achieve-card flex flex-col items-center p-3 rounded-2xl bg-slate-50 border" id="ach-bingo3">
-                        <span class="text-3xl mb-2">⚡</span>
-                        <span class="text-[10px] font-bold">多线并进</span>
-                        <span class="text-[8px] text-slate-400">单日完成3条连线</span>
+                    <div class="p-4 bg-white rounded-2xl border">
+                        <div class="text-[10px] text-slate-400 uppercase">完美天数</div>
+                        <div id="stat-perfect" class="text-2xl font-black mt-1">0</div>
                     </div>
                 </div>
             </div>
 
             <div class="glass p-8">
-                <h2 class="font-bold text-slate-800 mb-4 border-b pb-4 text-sm">历史回顾</h2>
-                <div id="history-list" class="space-y-3 max-h-60 overflow-y-auto pr-2 text-xs text-slate-500"></div>
+                <h2 class="font-bold text-slate-800 mb-6">🏆 成就勋章</h2>
+                <div class="grid grid-cols-2 gap-4" id="achievement-grid">
+                    <div id="ach-1" class="flex flex-col items-center p-4 rounded-2xl bg-white border opacity-30 grayscale transition-all duration-700">
+                        <span class="text-3xl mb-1">🌱</span><span class="text-[10px] font-bold">首次连线</span>
+                    </div>
+                    <div id="ach-3" class="flex flex-col items-center p-4 rounded-2xl bg-white border opacity-30 grayscale transition-all duration-700">
+                        <span class="text-3xl mb-1">⚡</span><span class="text-[10px] font-bold">三线达成</span>
+                    </div>
+                    <div id="ach-7" class="flex flex-col items-center p-4 rounded-2xl bg-white border opacity-30 grayscale transition-all duration-700">
+                        <span class="text-3xl mb-1">🔥</span><span class="text-[10px] font-bold">七日连续</span>
+                    </div>
+                    <div id="ach-win" class="flex flex-col items-center p-4 rounded-2xl bg-white border opacity-30 grayscale transition-all duration-700">
+                        <span class="text-3xl mb-1">👑</span><span class="text-[10px] font-bold">完美丰荣</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="trophy-overlay" onclick="this.style.display='none'" class="fixed inset-0 bg-white/90 z-[2000] hidden flex-col items-center justify-center cursor-pointer">
-        <div class="text-9xl mb-6 animate-bounce">🏆</div>
-        <h2 class="text-4xl font-black text-slate-800">BINGO! 完美达成</h2>
-        <p class="text-slate-400 mt-4 tracking-widest">每一天的你都在熠熠生辉</p>
+    <div id="trophy-overlay" onclick="this.style.display='none'" class="fixed inset-0 bg-white/95 z-[2000] hidden flex-col items-center justify-center cursor-pointer animate-in fade-in duration-500">
+        <div class="text-9xl mb-8">🏆</div>
+        <h2 class="text-4xl font-black text-slate-800">全 满 贯 达 成</h2>
+        <p class="text-slate-400 mt-4 tracking-[0.2em]">你对自己照顾得真好</p>
     </div>
 
     <script>
-        // --- 核心状态 ---
-        let appState = {
-            gridTasks: Array(25).fill(""), // 表格内的任务
-            activeIndices: [],            // 勾选的任务索引
-            pool: JSON.parse(localStorage.getItem('fe_pool')) || ["晒太阳", "喝水1.5L", "拉伸5分钟", "吃水果", "撸猫/狗", "冥想10min", "深呼吸", "整理桌面", "放下手机吃饭", "早睡30min", "步数8000", "写一行日记", "洗个热水澡", "修剪指甲", "换套舒服衣服", "喝杯热茶", "浇花/看绿植", "发呆10分钟", "阅读纸质书", "听一张完整专辑"],
-            stats: JSON.parse(localStorage.getItem('fe_stats')) || { days: 1, perfect: 0, lastDate: new Date().toLocaleDateString(), totalBingos: 0, achievements: [] },
-            history: JSON.parse(localStorage.getItem('fe_history')) || []
+        let state = {
+            grid: JSON.parse(localStorage.getItem('fe_grid')) || Array(25).fill(""),
+            active: JSON.parse(localStorage.getItem('fe_active')) || [],
+            pool: JSON.parse(localStorage.getItem('fe_pool')) || ["晒太阳", "喝水1.5L", "拉伸5min", "吃水果", "撸猫", "冥想", "阅读10页", "整理桌面", "深呼吸", "早睡", "步数8000", "写日记", "洗热水澡", "修剪指甲", "换床单", "喝热茶", "看绿植", "发呆", "涂香水", "唱歌"],
+            stats: JSON.parse(localStorage.getItem('fe_stats')) || { days: 1, perfect: 0, lastDate: new Date().toLocaleDateString(), bingos: 0 }
         };
 
-        // --- 初始化 ---
-        function resetGrid() {
-            const size = document.getElementById('gridSize').value;
-            const [cols, rows] = size.split('x').map(Number);
-            appState.gridTasks = Array(cols * rows).fill("");
-            appState.activeIndices = [];
-            renderAll();
+        function save() {
+            localStorage.setItem('fe_grid', JSON.stringify(state.grid));
+            localStorage.setItem('fe_active', JSON.stringify(state.active));
+            localStorage.setItem('fe_pool', JSON.stringify(state.pool));
+            localStorage.setItem('fe_stats', JSON.stringify(state.stats));
         }
 
-        function renderAll() {
-            const grid = document.getElementById('bingo-grid');
-            const size = document.getElementById('gridSize').value;
-            const [cols, rows] = size.split('x').map(Number);
+        function init() {
+            renderGrid();
+            renderPool();
+            updateDashboard();
             
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-            grid.innerHTML = '';
+            // 日期逻辑
+            if(state.stats.lastDate !== new Date().toLocaleDateString()) {
+                state.stats.days++;
+                state.stats.lastDate = new Date().toLocaleDateString();
+                save();
+            }
+        }
 
-            appState.gridTasks.forEach((task, i) => {
+        function renderGrid() {
+            const container = document.getElementById('bingo-grid');
+            const sizeStr = document.getElementById('gridSize').value;
+            const size = parseInt(sizeStr[0]);
+            
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            container.innerHTML = '';
+
+            state.grid.slice(0, size*size).forEach((task, i) => {
                 const cell = document.createElement('div');
-                cell.className = `bingo-cell ${appState.activeIndices.includes(i) ? 'active shadow-none' : ''}`;
-                cell.innerHTML = task ? `<span class="font-medium">${task}</span>` : `<span class="text-slate-200 text-xs">拖拽至此</span>`;
-                
-                cell.onclick = () => {
-                    if(!task) return;
-                    toggleCell(i);
-                };
-                grid.appendChild(cell);
+                cell.className = `bingo-cell ${state.active.includes(i) ? 'active' : ''}`;
+                cell.innerHTML = task ? `<span>${task}</span>` : `<span class="text-slate-200">空</span>`;
+                cell.onclick = () => { if(task) toggleCell(i); };
+                container.appendChild(cell);
             });
 
-            renderPool();
-            updateUI();
-            save();
+            // 初始化棋盘拖拽 - 增加置换阈值
+            new Sortable(container, {
+                group: 'shared',
+                animation: 250,
+                swap: true, // 启用置换模式
+                invertedSwapThreshold: 0.6, // 必须覆盖60%才触发置换
+                onEnd: syncData
+            });
         }
 
         function renderPool() {
             const poolEl = document.getElementById('tag-pool');
             poolEl.innerHTML = '';
-            appState.pool.forEach((t, i) => {
+            state.pool.forEach((t, i) => {
                 const tag = document.createElement('div');
-                tag.className = 'tag-item shadow-sm active:scale-95';
+                tag.className = 'tag-item';
                 tag.innerText = t;
-                // 长按删除功能
-                let timer;
-                tag.ontouchstart = () => timer = setTimeout(() => deleteTag(i), 800);
-                tag.ontouchend = () => clearTimeout(timer);
-                tag.onmousedown = () => timer = setTimeout(() => deleteTag(i), 800);
-                tag.onmouseup = () => clearTimeout(timer);
                 
+                // 长按删除
+                let timer;
+                tag.onmousedown = tag.ontouchstart = () => timer = setTimeout(() => {
+                    if(confirm(`删除任务: ${t}？`)) { state.pool.splice(i, 1); save(); init(); }
+                }, 800);
+                tag.onmouseup = tag.ontouchend = () => clearTimeout(timer);
+
                 poolEl.appendChild(tag);
             });
 
-            // 启用双向拖拽
-            new Sortable(document.getElementById('tag-pool'), {
-                group: 'bingo',
-                animation: 200,
-                onEnd: syncDataFromDOM
-            });
-            new Sortable(document.getElementById('bingo-grid'), {
-                group: 'bingo',
-                animation: 200,
-                onEnd: syncDataFromDOM
+            new Sortable(poolEl, {
+                group: 'shared',
+                animation: 250,
+                onEnd: syncData
             });
         }
 
-        function syncDataFromDOM() {
+        function syncData() {
             const gridCells = document.querySelectorAll('#bingo-grid .bingo-cell');
-            appState.gridTasks = Array.from(gridCells).map(el => el.innerText === "拖拽至此" ? "" : el.innerText);
+            const size = parseInt(document.getElementById('gridSize').value[0]);
+            state.grid = Array.from(gridCells).map(c => c.innerText === "空" ? "" : c.innerText);
             
             const poolTags = document.querySelectorAll('#tag-pool .tag-item');
-            appState.pool = Array.from(poolTags).map(el => el.innerText);
-            renderAll();
+            state.pool = Array.from(poolTags).map(t => t.innerText);
+            
+            save();
+            renderGrid(); // 重新渲染以确保 onclick 绑定正确
         }
 
-        function toggleCell(index) {
-            const pos = appState.activeIndices.indexOf(index);
-            if (pos > -1) {
-                appState.activeIndices.splice(pos, 1);
-            } else {
-                appState.activeIndices.push(index);
-                checkBingo(index);
+        function toggleCell(idx) {
+            const pos = state.active.indexOf(idx);
+            if(pos > -1) state.active.splice(pos, 1);
+            else {
+                state.active.push(idx);
+                // 只有点亮时检测连线
+                setTimeout(() => checkBingoLogic(), 100);
             }
-            renderAll();
+            save();
+            renderGrid();
+            updateDashboard();
         }
 
-        // --- BINGO 逻辑 ---
-        function checkBingo(lastIndex) {
-            const size = document.getElementById('gridSize').value;
-            const [cols, rows] = size.split('x').map(Number);
-            const r = Math.floor(lastIndex / cols);
-            const c = lastIndex % cols;
+        function checkBingoLogic() {
+            const size = parseInt(document.getElementById('gridSize').value[0]);
+            let bingoCount = 0;
+            const active = state.active;
 
-            let bingoFound = false;
-
-            // 检查行
-            const rowIdx = Array.from({length: cols}, (_, i) => r * cols + i);
-            if (rowIdx.every(i => appState.activeIndices.includes(i) && appState.gridTasks[i])) {
-                triggerConfetti();
-                bingoFound = true;
+            // 行检测
+            for(let r=0; r<size; r++) {
+                let row = [];
+                for(let c=0; c<size; c++) row.push(r * size + c);
+                if(row.every(i => active.includes(i) && state.grid[i])) bingoCount++;
             }
-
-            // 检查列
-            const colIdx = Array.from({length: rows}, (_, i) => i * cols + c);
-            if (colIdx.every(i => appState.activeIndices.includes(i) && appState.gridTasks[i])) {
-                triggerConfetti();
-                bingoFound = true;
+            // 列检测
+            for(let c=0; c<size; c++) {
+                let col = [];
+                for(let r=0; r<size; r++) col.push(r * size + c);
+                if(col.every(i => active.includes(i) && state.grid[i])) bingoCount++;
             }
-
-            // 检查对角线 (仅方阵)
-            if (cols === rows) {
-                const diag1 = Array.from({length: cols}, (_, i) => i * cols + i);
-                const diag2 = Array.from({length: cols}, (_, i) => i * cols + (cols - 1 - i));
-                if (diag1.every(i => appState.activeIndices.includes(i) && appState.gridTasks[i]) || 
-                    diag2.every(i => appState.activeIndices.includes(i) && appState.gridTasks[i])) {
-                    triggerConfetti();
-                    bingoFound = true;
-                }
+            // 对角线
+            let d1 = [], d2 = [];
+            for(let i=0; i<size; i++) {
+                d1.push(i * size + i);
+                d2.push(i * size + (size - 1 - i));
             }
+            if(d1.every(i => active.includes(i) && state.grid[i])) bingoCount++;
+            if(d2.every(i => active.includes(i) && state.grid[i])) bingoCount++;
 
-            if (bingoFound) {
-                appState.stats.totalBingos++;
-                checkAchievements();
+            // 如果Bingo数量增加，喷花
+            if(bingoCount > state.stats.bingos) {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.7 } });
             }
-
-            // 检查完美达成
-            if (appState.gridTasks.every((t, i) => !t || appState.activeIndices.includes(i))) {
-                const activeTaskCount = appState.gridTasks.filter(t => t).length;
-                if(activeTaskCount > 0 && appState.activeIndices.length === activeTaskCount) {
-                    setTimeout(() => {
-                        document.getElementById('trophy-overlay').style.display = 'flex';
-                        appState.stats.perfect++;
-                        appState.history.unshift(`${new Date().toLocaleDateString()} 完美达成`);
-                    }, 1000);
-                }
+            state.stats.bingos = bingoCount;
+            
+            // 完美达成检测
+            const taskCount = state.grid.filter(t => t).length;
+            if(taskCount > 0 && active.length === taskCount) {
+                document.getElementById('trophy-overlay').style.display = 'flex';
+                state.stats.perfect++;
             }
+            
+            save();
+            updateDashboard();
         }
 
-        function triggerConfetti() {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#ffafbd', '#2193b0', '#38ef7d', '#ffd700'] });
-        }
-
-        // --- 功能函数 ---
-        function randomizeGrid() {
-            let shuffledPool = [...appState.pool].sort(() => Math.random() - 0.5);
-            const total = appState.gridTasks.length;
-            appState.gridTasks = shuffledPool.slice(0, total);
-            // 补全空格
-            while(appState.gridTasks.length < total) appState.gridTasks.push("");
-            appState.activeIndices = [];
-            renderAll();
-        }
-
-        function clearDailyProgress() {
-            appState.activeIndices = [];
-            renderAll();
-        }
-
-        function clearGridTasks() {
-            appState.gridTasks = appState.gridTasks.map(() => "");
-            appState.activeIndices = [];
-            renderAll();
-        }
-
-        function addNewTag() {
-            const input = document.getElementById('tagInput');
-            if(input.value) {
-                appState.pool.unshift(input.value);
-                input.value = '';
-                renderAll();
-            }
-        }
-
-        function deleteTag(index) {
-            if(confirm("确定删除这个标签吗？")) {
-                appState.pool.splice(index, 1);
-                renderAll();
-            }
-        }
-
-        function updateUI() {
-            const totalTasks = appState.gridTasks.filter(t => t).length;
-            const progress = totalTasks ? Math.round((appState.activeIndices.length / totalTasks) * 100) : 0;
+        function updateDashboard() {
+            const taskCount = state.grid.filter(t => t).length;
+            const progress = taskCount ? Math.round((state.active.length / taskCount) * 100) : 0;
             
             document.getElementById('top-progress').innerText = progress + '%';
-            document.getElementById('top-date').innerText = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('stat-days').innerText = appState.stats.days;
-            document.getElementById('stat-perfect').innerText = appState.stats.perfect;
-            document.getElementById('top-bingo').innerText = appState.stats.totalBingos;
+            document.getElementById('top-bingo').innerText = state.stats.bingos;
+            document.getElementById('stat-days').innerText = state.stats.days;
+            document.getElementById('stat-perfect').innerText = state.stats.perfect;
+            document.getElementById('top-date').innerText = new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-            const histList = document.getElementById('history-list');
-            histList.innerHTML = appState.history.map(h => `<div class="p-2 bg-white rounded-lg shadow-sm border-l-4 border-blue-400">${h}</div>`).join('');
-
-            checkAchievements();
+            // 成就点亮
+            if(state.stats.bingos >= 1) document.getElementById('ach-1').style.cssText = "opacity:1; grayscale:0; border-color:#fde047; background:#fefce8";
+            if(state.stats.bingos >= 3) document.getElementById('ach-3').style.cssText = "opacity:1; grayscale:0; border-color:#fb923c; background:#fff7ed";
+            if(state.stats.days >= 7) document.getElementById('ach-7').style.cssText = "opacity:1; grayscale:0; border-color:#f87171; background:#fef2f2";
+            if(state.active.length > 0 && state.active.length === state.grid.filter(t=>t).length) document.getElementById('ach-win').style.cssText = "opacity:1; grayscale:0; border-color:#60a5fa; background:#eff6ff";
         }
 
-        function checkAchievements() {
-            if (appState.stats.totalBingos >= 1) document.getElementById('ach-1').classList.add('unlocked');
-            if (appState.stats.days >= 7) document.getElementById('ach-7').classList.add('unlocked');
-            if (appState.stats.perfect >= 1) document.getElementById('ach-all').classList.add('unlocked');
-            // ... 更多逻辑
+        // 按钮功能
+        function addTag() {
+            const input = document.getElementById('tagInput');
+            if(input.value) { state.pool.unshift(input.value); input.value = ''; save(); init(); }
         }
-
-        function save() {
-            localStorage.setItem('fe_pool', JSON.stringify(appState.pool));
-            localStorage.setItem('fe_stats', JSON.stringify(appState.stats));
-            localStorage.setItem('fe_history', JSON.stringify(appState.history));
+        function randomFill() {
+            let shuf = [...state.pool].sort(() => Math.random() - 0.5);
+            const size = parseInt(document.getElementById('gridSize').value[0]);
+            state.grid = shuf.slice(0, size*size);
+            while(state.grid.length < size*size) state.grid.push("");
+            state.active = [];
+            state.stats.bingos = 0;
+            save(); init();
         }
+        function clearProgress() { state.active = []; state.stats.bingos = 0; save(); init(); }
+        function resetGridTasks() { if(confirm("重置棋盘？")) { state.grid = Array(25).fill(""); state.active = []; state.stats.bingos = 0; save(); init(); } }
+        function changeGridSize() { state.active = []; state.stats.bingos = 0; save(); init(); }
 
-        // --- 启动 ---
-        // 日期检测
-        if(appState.stats.lastDate !== new Date().toLocaleDateString()) {
-            appState.stats.days++;
-            appState.stats.lastDate = new Date().toLocaleDateString();
-            save();
-        }
-
-        renderAll();
+        init();
     </script>
 </body>
 </html>
